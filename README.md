@@ -14,6 +14,11 @@ Abra os arquivos `index.html` de cada subpasta, ou acesse via GitHub Pages (quan
 - `https://darcideborba.github.io/painel-viagens/` (painel nacional, na raiz)
 - `https://darcideborba.github.io/painel-viagens/internacional/`
 
+## Código-fonte e prompts
+
+- `gerar_painel.py` — script Python que monta o HTML a partir de `dados_nacional.json`/`dados_internacional.json`.
+- `PROMPT_nacional.md` e `PROMPT_internacional.md` — prompts originais de IA usados para cada painel (ver `README_PROMPTS.md`).
+
 ## Licença
 
 Código sob licença MIT (veja `LICENSE`). Preços e disponibilidades são apenas ilustrativos, referentes à data de geração do painel.
