@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de viagens nacionais - BSB - saída terça ou quarta após 12h</title>
+<style>
+:root{
+  --verde:#1f5c46; --verde-claro:#2e7d5f; --verde-fraco:#e8f1ed;
+  --fundo:#f6f5f2; --papel:#ffffff; --borda:#dcd9d2;
+  --texto:#1c1c1a; --suave:#5f5c56; --alerta:#8a4b1f; --lacuna:#eceae5;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:var(--texto);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 22px 70px}
+h1{font-size:25px;margin:0 0 6px;letter-spacing:-.2px}
+h2{font-size:18px;margin:34px 0 12px;color:var(--verde);letter-spacing:-.1px}
+h3{font-size:15px;margin:0 0 10px}
+.sub{color:var(--suave);font-size:14px;margin:0 0 4px}
+.num{font-variant-numeric:tabular-nums}
+
+.achado{background:var(--verde);color:#fff;border-radius:10px;padding:20px 22px;margin:22px 0 4px}
+.achado h3{color:#cfe6db;text-transform:uppercase;letter-spacing:.09em;font-size:11px;margin:0 0 8px}
+.achado p{margin:0 0 10px;font-size:15.5px}
+.achado p:last-child{margin-bottom:0}
+.achado b{color:#ffe9b8}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:12px;margin:14px 0}
+.card{background:var(--papel);border:1px solid var(--borda);border-radius:9px;padding:14px 16px;cursor:pointer;transition:.13s}
+.card:hover{border-color:var(--verde-claro)}
+.card.ativo{border-color:var(--verde);box-shadow:0 0 0 2px var(--verde-fraco)}
+.card .datas{font-weight:640;font-size:15px}
+.card .meta{color:var(--suave);font-size:13px;margin-top:3px}
+.card .piso{margin-top:8px;font-size:19px;font-weight:660;color:var(--verde)}
+.selo{display:inline-block;background:var(--verde-fraco);color:var(--verde);font-size:11px;
+  font-weight:660;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:2px}
+.selo.aviso{background:#f7ecdf;color:var(--alerta)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin:12px 0}
+.kpi{background:var(--papel);border:1px solid var(--borda);border-radius:9px;padding:13px 15px}
+.kpi .rot{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--suave)}
+.kpi .val{font-size:22px;font-weight:660;margin-top:3px;color:var(--verde)}
+.kpi .obs{font-size:12.5px;color:var(--suave);margin-top:2px}
+
+table{width:100%;border-collapse:collapse;background:var(--papel);
+  border:1px solid var(--borda);border-radius:9px;overflow:hidden;font-size:14px}
+th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--borda)}
+th{background:var(--verde-fraco);color:var(--verde);font-size:12px;
+  text-transform:uppercase;letter-spacing:.05em;font-weight:660}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#fafaf8}
+tbody tr.ativo{background:var(--verde-fraco)}
+tbody tr:last-child td{border-bottom:none}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+th.n{text-align:right}
+
+.filtros{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+.filtro{border:1px solid var(--borda);background:var(--papel);border-radius:20px;
+  padding:5px 14px;font-size:13px;cursor:pointer;color:var(--suave)}
+.filtro.ativo{background:var(--verde);border-color:var(--verde);color:#fff;font-weight:600}
+
+.duas{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:12px}
+@media(max-width:820px){.duas{grid-template-columns:1fr}}
+.painel{background:var(--papel);border:1px solid var(--borda);border-radius:9px;padding:16px 18px}
+.voo{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--borda);font-size:13.5px}
+.voo:last-child{border-bottom:none}
+.voo .esq b{font-size:14.5px}
+.voo .desc{color:var(--suave);font-size:12.5px;margin-top:2px}
+.voo .dir{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:640}
+.tag{display:inline-block;font-size:10.5px;font-weight:660;padding:1px 7px;border-radius:20px;margin-left:5px;vertical-align:1px}
+.tag.piso{background:var(--verde-fraco);color:var(--verde)}
+.tag.direto{background:#e6eef7;color:#1d4f80}
+.tag.ruim{background:#f7ecdf;color:var(--alerta)}
+.hotel{padding:9px 0;border-bottom:1px solid var(--borda);cursor:pointer;font-size:13.5px}
+.hotel:last-child{border-bottom:none}
+.hotel:hover{background:#fafaf8}
+.hotel.ativo{background:var(--verde-fraco)}
+.hotel .nome{font-weight:620}
+.hotel .meta{color:var(--suave);font-size:12.5px;display:flex;justify-content:space-between;gap:8px;margin-top:2px}
+.hotel .preco{font-weight:640;color:var(--verde);font-variant-numeric:tabular-nums}
+
+.total{background:var(--verde);color:#fff;border-radius:9px;padding:15px 18px;margin-top:14px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.total .rot{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:#cfe6db}
+.total .comp{font-size:13px;color:#dceae4;margin-top:3px}
+.total .val{font-size:27px;font-weight:680;font-variant-numeric:tabular-nums}
+
+.notas{background:var(--papel);border:1px solid var(--borda);border-left:3px solid var(--verde);
+  border-radius:0 9px 9px 0;padding:14px 18px;margin-top:14px;font-size:13.5px}
+.notas ul{margin:6px 0 0;padding-left:19px}
+.notas li{margin-bottom:5px}
+footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--borda);color:var(--suave);font-size:12.5px}
+.legenda{font-size:12.5px;color:var(--suave);margin-top:7px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Viagens nacionais saindo de Brasília</h1>
+<p class="sub">1 adulto, classe econômica, sem bagagem despachada. Saída na terça ou na quarta depois das 12h; retorno na quinta-feira pela manhã. Duração de 8 a 9 noites. Coleta em 18 de agosto de 2026.</p>
+
+<div class="achado">
+  <h3>Achado principal</h3>
+  <p>Sob a restrição de horário, o que separa os destinos não é o piso tarifário, e sim <b>quantos voos alcançam esse piso dentro da janela permitida</b>. Vitória e Salvador oferecem quatro a cinco saídas no piso depois das 12h, mas todas com conexão de 4 a 6 horas. Recife, Fortaleza e Natal só atingem o piso em voos que decolam depois das 21h.</p>
+  <p><b>Maceió é a melhor combinação do conjunto.</b> Tem apenas duas saídas na janela, porém ambas diretas em 2h25, sendo a de 16:50 a única do levantamento que junta horário confortável, voo sem escala e a hospedagem avaliada mais barata da amostra (Dani Hostel e Pousada, nota 8,4, R$ 55 a diária). O retorno fecha o desenho: LATAM direto às 05:00 de quinta, chegando a Brasília às 07:30, por R$ 566, valor que o Google Voos sinaliza como <b>R$ 400 abaixo do normal para essa rota</b>.</p>
+</div>
+
+<h2>Janela de viagem</h2>
+<div class="cards" id="janelas"></div>
+
+<div class="kpis" id="kpis"></div>
+
+<h2>Matriz de tarifas por janela</h2>
+<p class="sub">Piso de ida e volta em reais, por destino. Escala de cor calculada por linha, para comparar o mesmo destino entre as janelas. Clique na célula para abrir o destino.</p>
+<div style="overflow-x:auto"><table id="matriz"></table></div>
+<p class="legenda">Verde mais escuro indica o menor valor daquela linha. Células em cinza não foram cotadas nesta rodada.</p>
+
+<h2>Ranking da janela selecionada</h2>
+<div class="filtros" id="filtros"></div>
+<div style="overflow-x:auto"><table id="ranking"></table></div>
+<p class="legenda">Custo total = piso da passagem de ida e volta mais a hospedagem econômica mais barata com nota igual ou superior a 8. Onde não há acomodação avaliada dentro do perfil econômico, a coluna registra a lacuna.</p>
+
+<h2 id="tituloDestino">Detalhe do destino</h2>
+<div class="duas">
+  <div class="painel">
+    <h3>Saídas de Brasília no dia da ida</h3>
+    <div id="voos"></div>
+    <div id="volta" style="margin-top:16px"></div>
+  </div>
+  <div class="painel">
+    <h3>Hospedagem cotada</h3>
+    <div id="hoteis"></div>
+  </div>
+</div>
+
+<div class="total" id="total"></div>
+
+<div class="notas" id="notas"></div>
+
+<footer>
+  <p><b>Fontes.</b> Tarifas: Google Voos, consulta direta por rota e par de datas, em 18 de agosto de 2026, preços de ida e volta para 1 adulto incluindo tributos, sem bagagem despachada. Hospedagem: Booking.com, mesma data de coleta, 1 adulto, para o período de 23 de setembro a 1 de outubro de 2026.</p>
+  <p><b>Limitações.</b> A cobertura é de oito destinos de praia e litoral, escolhidos por terem ligação direta ou de uma parada com Brasília. Os preços de ida e volta exibidos pelo Google combinam a ida escolhida com o retorno mais barato do dia; o horário exato do retorno foi verificado individualmente apenas para Salvador e Maceió, e deve ser reconferido no ato da compra para os demais. Tarifas de baixa disponibilidade mudam em horas. Valores de hospedagem correspondem ao total do período, não à diária.</p>
+</footer>
+</div>
+
+<script>
+const JANELAS = [
+  {id:"a", rot:"Qua 23/09 a Qui 01/10", noites:8, ant:36, selo:"Recomendada", tipo:"ok"},
+  {id:"b", rot:"Qua 07/10 a Qui 15/10", noites:8, ant:50, selo:"Cotação parcial", tipo:"aviso"}
+];
+
+const D = [
+  {
+    sig:"MCZ", nome:"Maceió", perfil:"praia", destaque:true,
+    tarifa:{a:1600, b:null},
+    pisoApos12:2, sinal:"Retorno com preço R$ 400 abaixo do normal",
+    voos:[
+      {h:"16:50 - 19:15", d:"LATAM, direto, 2h25", p:1600, piso:true, direto:true},
+      {h:"21:15 - 23:40", d:"LATAM, direto, 2h25", p:1600, piso:true, direto:true},
+      {h:"21:15 - 23:35", d:"Gol, direto, 2h20", p:2013, direto:true},
+      {h:"11:30 - 16:55", d:"Gol, 1 parada em GRU, 5h25, sai antes das 12h", p:2013}
+    ],
+    volta:[
+      {h:"05:00 - 07:30", d:"LATAM, direto, 2h30, chega a Brasília às 07:30", p:566, piso:true, direto:true},
+      {h:"03:45 - 10:40", d:"Gol, 1 parada no GIG, 6h55", p:979}
+    ],
+    hoteis:[
+      {n:"Dani Hostel e Pousada", b:"Ponta Verde", nota:8.4, p:440},
+      {n:"Wanderlust Hostel", b:"Jatiúca", nota:null, p:880},
+      {n:"Suítes Privativas Praia de Pajuçara", b:"Pajuçara", nota:null, p:1020},
+      {n:"Rede Andrade Porto Mar", b:"Mangabeiras", nota:8.7, p:1655.38},
+      {n:"ibis budget Maceió Pajuçara", b:"Pajuçara", nota:null, p:1683},
+      {n:"ibis Styles Maceió Pajuçara", b:"Pajuçara", nota:8.5, p:2970}
+    ]
+  },
+  {
+    sig:"VIX", nome:"Vitória", perfil:"praia",
+    tarifa:{a:1111, b:null}, pisoApos12:5,
+    voos:[
+      {h:"12:25 - 16:50", d:"LATAM, 1 parada em GRU de 1h15, 4h25", p:1111, piso:true},
+      {h:"12:45 - 18:45", d:"LATAM, 1 parada em CGH de 2h45, 6h", p:1111, piso:true, ruim:true},
+      {h:"13:20 - 19:40", d:"LATAM, 1 parada no GIG de 3h30, 6h20", p:1111, piso:true, ruim:true},
+      {h:"14:30 - 16:15", d:"LATAM, direto, 1h45", p:1222, direto:true},
+      {h:"18:40 - 23:25", d:"LATAM, 1 parada em CGH de 1h30, 4h45", p:1111, piso:true},
+      {h:"19:10 - 00:30+1", d:"LATAM, 1 parada em GRU de 2h10, 5h20", p:1111, piso:true}
+    ],
+    volta:[],
+    hoteis:[
+      {n:"Guanaaní Hostel", b:"Centro", nota:null, p:576},
+      {n:"Toca da Mona Roots Hostel", b:"Praia do Canto", nota:null, p:632},
+      {n:"Onça da Praia Hostel", b:"Pontal de Camburi", nota:null, p:773},
+      {n:"Hostel Alto do Rosário", b:"Centro", nota:null, p:884},
+      {n:"Casa Vix Centro Histórico", b:"Centro", nota:9.2, p:960},
+      {n:"Solar Clefis", b:"Centro", nota:null, p:1000}
+    ]
+  },
+  {
+    sig:"SSA", nome:"Salvador", perfil:"praia",
+    tarifa:{a:1160, b:1160}, pisoApos12:4,
+    voos:[
+      {h:"12:45 - 17:40", d:"LATAM, 1 parada em CGH de 45min, 4h55", p:1160, piso:true},
+      {h:"13:45 - 15:40", d:"LATAM, direto, 1h55", p:1251, direto:true},
+      {h:"14:30 - 16:30", d:"Gol, direto, 2h", p:1342, direto:true},
+      {h:"15:15 - 20:35", d:"LATAM, 1 parada em GRU de 1h15, 5h20", p:1160, piso:true},
+      {h:"15:40 - 17:40", d:"LATAM, direto, 2h", p:1251, direto:true},
+      {h:"17:25 - 23:15", d:"LATAM, 1 parada em CGH de 1h45, 5h50", p:1160, piso:true},
+      {h:"18:40 - 23:55", d:"LATAM, 1 parada em CGH de 1h05, 5h15", p:1160, piso:true},
+      {h:"20:40 - 22:30", d:"LATAM, direto, 1h50", p:1251, direto:true},
+      {h:"21:40 - 23:45", d:"Gol, direto, 2h05", p:1342, direto:true}
+    ],
+    volta:[
+      {h:"05:35 - 07:35", d:"LATAM, direto, 2h", p:680, direto:true},
+      {h:"05:45 - 07:45", d:"Gol, direto, 2h", p:680, direto:true},
+      {h:"04:45 - 10:15", d:"LATAM, 1 parada em CGH de 1h05, 5h30", p:590, piso:true}
+    ],
+    hoteis:[
+      {n:"Luz de Regina Bahia", b:"Vitória", nota:null, p:302.40},
+      {n:"Hostel Recanto da Sereia", b:"Rio Vermelho", nota:null, p:472},
+      {n:"Hostel Barra", b:"Barra", nota:null, p:480},
+      {n:"Odara Hostel & Guesthouse", b:"Barra", nota:null, p:497.08},
+      {n:"Rede Andrade Bahia", b:"Stiep", nota:8.3, p:1053.79},
+      {n:"Rede Andrade Express", b:"Amaralina", nota:8.4, p:1086.30}
+    ]
+  },
+  {
+    sig:"REC", nome:"Recife", perfil:"praia",
+    tarifa:{a:1179, b:1179}, pisoApos12:1,
+    voos:[
+      {h:"13:20 - 15:55", d:"LATAM, direto, 2h35", p:3555, direto:true},
+      {h:"15:05 - 17:40", d:"LATAM, direto, 2h35", p:1451, direto:true},
+      {h:"18:55 - 21:30", d:"Azul, direto, 2h35", p:2420, direto:true},
+      {h:"20:45 - 23:20", d:"LATAM, direto, 2h35", p:1220, direto:true},
+      {h:"21:05 - 23:40", d:"Gol, direto, 2h35", p:1179, piso:true, direto:true}
+    ],
+    volta:[],
+    hoteis:[
+      {n:"Piratas do Sol Hostel", b:"Boa Viagem", nota:null, p:480},
+      {n:"Fit Hostel Piratas da Praia", b:"Boa Viagem", nota:null, p:506.72},
+      {n:"Zili Pernambuco Hostel Pousada", b:"Soledade", nota:null, p:540.35},
+      {n:"quintal293", b:"Soledade", nota:null, p:1020},
+      {n:"Beach Class Internacional Frente Mar", b:"Boa Viagem", nota:8.0, p:2448},
+      {n:"Motto by Hilton Recife", b:"Santo Antônio", nota:8.6, p:2525}
+    ]
+  },
+  {
+    sig:"AJU", nome:"Aracaju", perfil:"praia",
+    tarifa:{a:1264, b:null}, pisoApos12:2,
+    voos:[
+      {h:"19:10 - 02:05+1", d:"LATAM, 1 parada em GRU de 2h35, 6h55", p:1426},
+      {h:"21:10 - 09:40+1", d:"LATAM, 2 paradas em NAT e GRU, 12h30 de viagem", p:1264, piso:true, ruim:true},
+      {h:"21:10 - 09:40+1", d:"LATAM, 2 paradas em SLZ e GRU, 12h30 de viagem", p:1264, piso:true, ruim:true},
+      {h:"21:15 - 02:05+1", d:"Gol, 1 parada no GIG de 45min, 4h50", p:1575},
+      {h:"08:35 - 10:45", d:"LATAM, direto, 2h10, sai antes das 12h", p:1658, direto:true}
+    ],
+    volta:[],
+    hoteis:[
+      {n:"Quarto Aconchego Nordestino", b:"Atalaia", nota:null, p:504},
+      {n:"Anauê Pousada e Hostel", b:"Atalaia", nota:8.7, p:718},
+      {n:"Oscar Place", b:"Salgado Filho", nota:9.3, p:728.28},
+      {n:"Village Caranguejo Flat", b:"Atalaia", nota:null, p:805.50},
+      {n:"Pousada Acalanto", b:"Coroa do Meio", nota:null, p:1022},
+      {n:"Rede Andrade Aracaju", b:"Tancredo Neves", nota:8.2, p:1195.10}
+    ]
+  },
+  {
+    sig:"FOR", nome:"Fortaleza", perfil:"praia",
+    tarifa:{a:1617, b:null}, pisoApos12:1,
+    voos:[
+      {h:"13:40 - 16:15", d:"LATAM, direto, 2h35", p:1662, direto:true},
+      {h:"13:45 - 20:25", d:"Gol, 1 parada em CGH de 1h30, 6h40", p:1920, ruim:true},
+      {h:"21:30 - 00:05+1", d:"Gol, direto, 2h35", p:1617, piso:true, direto:true}
+    ],
+    volta:[],
+    hoteis:[
+      {n:"Refúgio Hostel Fortaleza", b:"Centro", nota:null, p:440},
+      {n:"Suítes Centro Praia", b:"Centro", nota:8.0, p:560},
+      {n:"URB Hotel", b:"Meireles", nota:null, p:646.40},
+      {n:"Suites Premium Jacarey", b:"Jacarecanga", nota:9.4, p:734.40},
+      {n:"Condomínio Flat La Perla", b:"Meireles", nota:8.3, p:1330},
+      {n:"Tabajara Flats Praia de Iracema", b:"Praia de Iracema", nota:8.4, p:1545}
+    ]
+  },
+  {
+    sig:"NAT", nome:"Natal", perfil:"praia",
+    tarifa:{a:1863, b:null}, pisoApos12:2,
+    voos:[
+      {h:"13:45 - 19:55", d:"Gol, 1 parada em CGH de 1h, 6h10", p:2364, ruim:true},
+      {h:"21:10 - 23:55", d:"LATAM, direto, 2h45", p:1863, piso:true, direto:true},
+      {h:"21:30 - 00:15+1", d:"Gol, direto, 2h45", p:1863, piso:true, direto:true}
+    ],
+    volta:[],
+    hoteis:[
+      {n:"Pousada e Hostel F C", b:"Capim Macio", nota:null, p:478},
+      {n:"Hostel La Casa de Mabel", b:"Ponta Negra", nota:null, p:480},
+      {n:"Isa Natal 1", b:"Capim Macio", nota:8.2, p:520},
+      {n:"Pousada e Hostel Natal", b:"Ponta Negra", nota:null, p:579.60},
+      {n:"Ponta Negra Flats", b:"Ponta Negra", nota:8.4, p:910},
+      {n:"9006 Suites Natal Hotel", b:"Ponta Negra", nota:8.3, p:1400.33}
+    ]
+  },
+  {
+    sig:"JPA", nome:"João Pessoa", perfil:"praia",
+    tarifa:{a:1975, b:null}, pisoApos12:1,
+    voos:[
+      {h:"18:05 - 02:50+1", d:"Gol, 1 parada em GRU de 3h45, 8h45 de viagem", p:1975, piso:true, ruim:true},
+      {h:"21:00 - 23:40", d:"LATAM, direto, 2h40", p:2021, direto:true}
+    ],
+    volta:[],
+    hoteis:[
+      {n:"Ciel Home LikeHome", b:"Bessa", nota:8.6, p:757.35},
+      {n:"Flat Studio Tambaú Perto de Tudo", b:"Tambaú", nota:9.2, p:952},
+      {n:"Move Tambaú II LikeHome", b:"Tambaú", nota:8.6, p:962.06},
+      {n:"Royal Flat LikeHome", b:"Tambaú", nota:8.4, p:1030},
+      {n:"Hit Cabo Branco IV LikeHome", b:"Cabo Branco", nota:9.2, p:1078.54},
+      {n:"Hotel Pousada Costa do Atlântico", b:"Manaíra", nota:8.6, p:1727.10}
+    ]
+  }
+];
+
+const NOTAS = {
+  a:[
+    "Não há feriado nacional dentro da janela. O feriado seguinte é 12 de outubro, fora do período.",
+    "Setembro e a primeira semana de outubro são baixa temporada no litoral nordestino, o que explica a hospedagem barata em Maceió, Natal e Fortaleza.",
+    "O Google Voos classifica os preços como normais em todas as oito rotas na ida. Na volta de Maceió no dia 1 de outubro, sinaliza R$ 400 abaixo do normal.",
+    "Recife concentra o piso em um único voo às 21:05. Perder essa saída significa pagar de R$ 272 a R$ 2.376 a mais no mesmo dia."
+  ],
+  b:[
+    "Cotação parcial: só Salvador e Recife foram consultados nesta janela, para testar a estabilidade do piso ao longo do tempo.",
+    "O piso é idêntico ao da janela de setembro nas duas rotas, R$ 1.160 e R$ 1.179. O que muda é a quantidade de saídas que alcançam esse valor depois das 12h, que cai de quatro para três em Salvador.",
+    "A janela inclui o feriado de 12 de outubro na segunda-feira seguinte à ida, o que tende a pressionar a hospedagem no fim de semana de 10 e 11 de outubro."
+  ]
+};
+
+let jan = "a", perfil = "todos", dest = "MCZ", hotelIdx = 0;
+const brl = v => "R$ " + v.toLocaleString("pt-BR", {minimumFractionDigits:0, maximumFractionDigits:0});
+const brl2 = v => "R$ " + v.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
+const dado = s => D.find(x => x.sig === s);
+const melhorHotel = d => {
+  const av = d.hoteis.filter(h => h.nota !== null && h.nota >= 8);
+  return av.length ? av.reduce((a,b) => b.p < a.p ? b : a) : null;
+};
+const cotados = j => D.filter(d => d.tarifa[j] !== null);
+
+function janelas(){
+  document.getElementById("janelas").innerHTML = JANELAS.map(j => {
+    const c = cotados(j.id);
+    const min = c.length ? Math.min(...c.map(d => d.tarifa[j.id])) : 0;
+    return `<div class="card ${j.id===jan?"ativo":""}" data-j="${j.id}">
+      <div class="datas">${j.rot}<span class="selo ${j.tipo==="aviso"?"aviso":""}">${j.selo}</span></div>
+      <div class="meta">${j.noites} noites, ${j.ant} dias de antecedência, ${c.length} destinos cotados</div>
+      <div class="piso num">${min?brl(min):"sem dado"}</div>
+    </div>`;
+  }).join("");
+  document.querySelectorAll("[data-j]").forEach(e => e.onclick = () => {
+    jan = e.dataset.j;
+    const c = cotados(jan);
+    if(!c.find(d => d.sig === dest)) { dest = c[0].sig; hotelIdx = 0; }
+    render();
+  });
+}
+
+function kpis(){
+  const c = cotados(jan);
+  const barato = c.reduce((a,b) => b.tarifa[jan] < a.tarifa[jan] ? b : a);
+  const totais = c.map(d => { const h = melhorHotel(d); return h ? d.tarifa[jan] + h.p : null; }).filter(x => x);
+  const j = JANELAS.find(x => x.id === jan);
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><div class="rot">Passagem mais barata</div><div class="val num">${brl(barato.tarifa[jan])}</div><div class="obs">${barato.nome}, ida e volta</div></div>
+    <div class="kpi"><div class="rot">Menor custo total</div><div class="val num">${totais.length?brl(Math.min(...totais)):"sem dado"}</div><div class="obs">passagem mais 8 noites avaliadas</div></div>
+    <div class="kpi"><div class="rot">Antecedência</div><div class="val num">${j.ant} dias</div><div class="obs">a contar de 18/08/2026</div></div>
+    <div class="kpi"><div class="rot">Destinos cotados</div><div class="val num">${c.length} de ${D.length}</div><div class="obs">${jan==="a"?"varredura completa":"amostra de controle"}</div></div>`;
+}
+
+function matriz(){
+  let h = `<thead><tr><th>Destino</th>` + JANELAS.map(j => `<th class="n">${j.rot}</th>`).join("") + `</tr></thead><tbody>`;
+  D.forEach(d => {
+    const vals = JANELAS.map(j => d.tarifa[j.id]).filter(v => v !== null);
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    h += `<tr><td><b>${d.nome}</b> <span style="color:var(--suave)">${d.sig}</span></td>`;
+    JANELAS.forEach(j => {
+      const v = d.tarifa[j.id];
+      if(v === null){ h += `<td class="n" style="background:var(--lacuna);color:var(--suave)">sem dado</td>`; return; }
+      const t = mx === mn ? 0 : (v - mn)/(mx - mn);
+      const bg = `rgba(31,92,70,${(0.30 - t*0.24).toFixed(3)})`;
+      h += `<td class="n" data-cel="${d.sig}|${j.id}" style="background:${bg};cursor:pointer">${brl(v)}</td>`;
+    });
+    h += `</tr>`;
+  });
+  document.getElementById("matriz").innerHTML = h + `</tbody>`;
+  document.querySelectorAll("[data-cel]").forEach(e => e.onclick = () => {
+    const [s,j] = e.dataset.cel.split("|");
+    jan = j; dest = s; hotelIdx = 0; render();
+  });
+}
+
+function filtros(){
+  const ps = ["todos","praia"];
+  document.getElementById("filtros").innerHTML = ps.map(p =>
+    `<div class="filtro ${p===perfil?"ativo":""}" data-p="${p}">${p==="todos"?"Todos os perfis":"Praia e litoral"}</div>`).join("");
+  document.querySelectorAll("[data-p]").forEach(e => e.onclick = () => { perfil = e.dataset.p; render(); });
+}
+
+function ranking(){
+  let linhas = cotados(jan).filter(d => perfil === "todos" || d.perfil === perfil);
+  linhas = linhas.map(d => { const h = melhorHotel(d); return {d, h, tot: h ? d.tarifa[jan] + h.p : null}; })
+                 .sort((x,y) => (x.tot ?? 9e9) - (y.tot ?? 9e9));
+  let h = `<thead><tr><th>Destino</th><th class="n">Passagem</th><th class="n">Voos no piso após 12h</th>
+    <th>Hospedagem avaliada mais barata</th><th class="n">Custo total</th></tr></thead><tbody>`;
+  linhas.forEach(l => {
+    h += `<tr data-d="${l.d.sig}" class="${l.d.sig===dest?"ativo":""}">
+      <td><b>${l.d.nome}</b></td>
+      <td class="n">${brl(l.d.tarifa[jan])}</td>
+      <td class="n">${l.d.pisoApos12}</td>
+      <td>${l.h ? l.h.n + ' <span style="color:var(--suave)">nota ' + l.h.nota.toFixed(1).replace(".",",") + ', ' + brl(l.h.p) + '</span>' : '<span style="color:var(--alerta)">sem opção avaliada no perfil econômico</span>'}</td>
+      <td class="n">${l.tot ? "<b>"+brl(l.tot)+"</b>" : "lacuna"}</td></tr>`;
+  });
+  document.getElementById("ranking").innerHTML = h + `</tbody>`;
+  document.querySelectorAll("[data-d]").forEach(e => e.onclick = () => { dest = e.dataset.d; hotelIdx = 0; render(); });
+}
+
+function detalhe(){
+  const d = dado(dest);
+  const j = JANELAS.find(x => x.id === jan);
+  document.getElementById("tituloDestino").textContent = "Detalhe de " + d.nome + " na janela de " + j.rot.toLowerCase();
+  document.getElementById("voos").innerHTML = d.voos.map(v => `
+    <div class="voo"><div class="esq"><b>${v.h}</b>
+      ${v.piso?'<span class="tag piso">piso</span>':""}
+      ${v.direto?'<span class="tag direto">direto</span>':""}
+      ${v.ruim?'<span class="tag ruim">itinerário desvantajoso</span>':""}
+      <div class="desc">${v.d}</div></div>
+      <div class="dir">${brl(v.p)}</div></div>`).join("");
+  document.getElementById("volta").innerHTML = d.volta.length
+    ? `<h3 style="margin-top:4px">Retorno na quinta pela manhã</h3>` + d.volta.map(v => `
+        <div class="voo"><div class="esq"><b>${v.h}</b>
+          ${v.direto?'<span class="tag direto">direto</span>':""}
+          <div class="desc">${v.d}</div></div>
+          <div class="dir">${brl(v.p)}</div></div>`).join("")
+    : `<p style="color:var(--alerta);font-size:13px;margin:0">Horário do retorno não verificado individualmente nesta rota. O valor de ida e volta acima combina a ida escolhida com o retorno mais barato do dia, que pode não ser matinal. Confirme antes de comprar.</p>`;
+  document.getElementById("hoteis").innerHTML = d.hoteis.map((h,i) => `
+    <div class="hotel ${i===hotelIdx?"ativo":""}" data-h="${i}">
+      <div class="nome">${h.n}</div>
+      <div class="meta"><span>${h.b}${h.nota!==null?", nota "+h.nota.toFixed(1).replace(".",","):", sem nota publicada"}</span>
+      <span class="preco">${brl2(h.p)}</span></div></div>`).join("");
+  document.querySelectorAll("[data-h]").forEach(e => e.onclick = () => { hotelIdx = +e.dataset.h; render(); });
+}
+
+function total(){
+  const d = dado(dest), h = d.hoteis[hotelIdx], t = d.tarifa[jan] + h.p;
+  document.getElementById("total").innerHTML = `
+    <div><div class="rot">Custo total estimado</div>
+      <div class="comp">${d.nome}, passagem ${brl(d.tarifa[jan])} mais ${h.n} por ${brl2(h.p)} em 8 noites</div></div>
+    <div class="val">${brl2(t)}</div>`;
+}
+
+function notas(){
+  document.getElementById("notas").innerHTML = "<b>Notas da janela selecionada</b><ul>" +
+    NOTAS[jan].map(n => `<li>${n}</li>`).join("") + "</ul>";
+}
+
+function render(){ janelas(); kpis(); matriz(); filtros(); ranking(); detalhe(); total(); notas(); }
+render();
+</script>
+</body>
+</html>
