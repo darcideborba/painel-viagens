@@ -1,0 +1,21 @@
+{
+  "title": "Painel de Viagens",
+  "description": "Painéis em HTML autocontido para planejamento de viagens nacionais e internacionais a partir de Brasília, com ranking, filtros e ficha por destino. Inclui o script Python de geração e os prompts utilizados.",
+  "upload_type": "software",
+  "version": "1.0.0",
+  "language": "por",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Santos Júnior, Darci de Borba",
+      "affiliation": "Instituto de Pesquisa Econômica Aplicada (Ipea)",
+      "orcid": "0000-0001-9851-5034"
+    }
+  ],
+  "keywords": [
+    "painel",
+    "planejamento",
+    "viagens"
+  ],
+  "license": "mit"
+}
